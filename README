@@ -1,0 +1,48 @@
+README
+
+To get the native library working on the MiniAccumuloCluster, you must do a couple of things
+
+1 - Actually build the libaccumulo shared library.  This requires 'make' and 'g++' to be installed
+2 - Use a MiniAccumuloConfig and call setNativeLibPaths(directory) on it, where directory is the location of the
+    libaccumulo library.  Then use that config object when creating a MiniAccumuloCluster.
+
+This sample does this for you, based on Accumulo 1.6.2 by default.  Maven will download the appropriate
+accumulo-native.tar.gz, extract it, and then call 'make' to build libaccumulo.  A MiniAccumuloCluster will be configured
+and started, then an Accumulo Shell will be opened into that MAC.
+
+RUNNING:
+
+mvn clean test
+
+As the shell is starting up, you will see a log message with a directory for the MAC.  Look for something like
+
+2016-02-24 09:11:15,077 INFO  [main] nativemaps.MiniAccumuloClusterNativeTest (MiniAccumuloClusterNativeTest.java:startShell(43)) - MAC temp folder is /var/folders/2y/n9lzqm2x10lfxqm9n40xvfvw0000gn/T/1456323064734-0
+2016-02-24 09:11:15,077 INFO  [main] nativemaps.MiniAccumuloClusterNativeTest (MiniAccumuloClusterNativeTest.java:startShell(44)) - Go there to look at logs
+
+While the shell is running, if you change to the directory, then change to logs directory, you will see 2 
+files TableServer_<somenumber>.out.  These are the tserver logs for the 2 tservers that are started.
+
+If native libraries are loaded correctly, will see something like
+
+2016-02-24 09:11:10,771 INFO  [org.apache.accumulo.tserver.TabletServer] tserver.NativeMap (NativeMap.java:<clinit>(82)) - Loaded native map shared library from /Users/mjwall/NetBeansProjects/MAC-nativemaps/target/build-native/accumulo-native-1.6.2:/Users/mjwall/Library/Java/Extensions:/Library/Java/Extensions:/Network/Library/Java/Extensions:/System/Library/Java/Extensions:/usr/lib/java:.
+
+If there was an error loading the native library, you will see something like this
+
+2016-02-24 08:59:34,186 ERROR [org.apache.accumulo.tserver.TabletServer] tserver.NativeMap (NativeMap.java:<clinit>(86)) - Tried and failed to load native map library from :/Users/mjwall/Library/Java/Extensions:/Library/Java/Extensions:/Network/Library/Java/Extensions:/System/Library/Java/Extensions:/usr/lib/java:.
+java.lang.UnsatisfiedLinkError: no accumulo in java.library.path
+        at java.lang.ClassLoader.loadLibrary(ClassLoader.java:1886)
+        at java.lang.Runtime.loadLibrary0(Runtime.java:849)
+        at java.lang.System.loadLibrary(System.java:1088)
+        at org.apache.accumulo.tserver.NativeMap.<clinit>(NativeMap.java:80)
+        at org.apache.accumulo.tserver.TabletServerResourceManager.<init>(TabletServerResourceManager.java:159)
+        at org.apache.accumulo.tserver.TabletServer.config(TabletServer.java:3586)
+        at org.apache.accumulo.tserver.TabletServer.main(TabletServer.java:3699)
+        at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+        at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:57)
+        at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+        at java.lang.reflect.Method.invoke(Method.java:606)
+        at org.apache.accumulo.start.Main$1.run(Main.java:141)
+        at java.lang.Thread.run(Thread.java:745)
+
+This was built on Mac OSX 10.10.5 with Oracle's Java 1.7.0_60, Apache's Maven 3.2.5, 
+Apples g++ version 7.0.2 (clang-700.1.81), and Apache's Accumulo 1.6.2
